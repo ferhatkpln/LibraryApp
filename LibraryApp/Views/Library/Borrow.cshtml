@@ -1,0 +1,21 @@
+﻿@model LibraryApp.Core.Concrete.Book
+
+<h2>Kitabı Ödünç Ver</h2>
+
+<form asp-action="Borrow" method="post">
+    <div class="form-group">
+        <label asp-for="BorrowerName" class="control-label">Ödünç Alan Kişi Adı:</label>
+        <input asp-for="BorrowerName" class="form-control" style="width:50%" />
+        <span asp-validation-for="BorrowerName" class="text-danger"></span>
+    </div>
+    <br />
+    <div class="form-group">
+        <label asp-for="ReturnDate" class="control-label">Geri Getirme Tarihi:</label>
+        <input asp-for="ReturnDate" type="date" class="form-control" style="width:50%" />
+        <span asp-validation-for="ReturnDate" class="text-danger"></span>
+    </div>
+    <br />
+    <input type="hidden" asp-for="Id" />
+
+    <button type="submit" class="btn btn-primary">Ödünç Ver</button>
+</form>

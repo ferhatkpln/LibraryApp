@@ -1,0 +1,13 @@
+﻿@model LibraryApp.Core.Concrete.Book
+
+<h2>Kitabı Teslim Et</h2>
+
+<p>Kitap Adı: @Model.Title</p>
+<p>Teslim Alan kişi: @Model.BorrowerName</p>
+<p>Teslim Tarihi: @Model.ReturnDate</p>
+<p>Kitap Durumu: @Model.IsAvailable</p>
+
+<form asp-action="Deliver" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-primary">Teslim Et</button>
+</form>

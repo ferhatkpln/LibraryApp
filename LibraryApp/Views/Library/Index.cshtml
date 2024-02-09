@@ -1,0 +1,55 @@
+﻿@model IEnumerable<LibraryApp.Core.Concrete.Book>
+
+<h2>Kütüphanedeki Kitaplar</h2>
+
+<table class="table" id="myTable">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Kitap Adı</th>
+            <th>Yazar</th>
+            <th>Kullanılabilirlik</th>
+            <th>Alan Kişi Adı</th>
+            <th>Geri Getirme Tarihi</th>
+            <th>Kapak Resmi</th>
+            <th>Aksiyon</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in Model)
+        {
+            <tr>
+                <td></td>
+                <td>@book.Title</td>
+                <td>@book.Author</td>
+                <td>@(book.IsAvailable ? "Kütüphanede" : "Dışarıda")</td>
+                <td>@book.BorrowerName</td>
+                <td>@book.ReturnDate</td>
+                <td><img src="~/img/@book.ImageUrl" height="70" width="90" border="2"></td>
+                <td>
+                    @if (book.IsAvailable)
+                    {
+                        <a asp-action="Borrow" asp-controller="Library" asp-route-id="@book.Id">Ödünç Ver</a>
+                    }
+                    else
+                    {
+                        <a asp-action="Deliver" asp-controller="Library" asp-route-id="@book.Id">Teslim Et</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a asp-action="AddBook" asp-controller="Library">Kitap Ekle</a>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var table = document.getElementById("myTable");
+    var rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+
+    for (var i = 0; i < rows.length; i++) {
+      var cell = rows[i].getElementsByTagName("td")[0];
+      cell.textContent = i + 1;
+    }
+  });
+</script>

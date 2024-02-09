@@ -1,0 +1,25 @@
+﻿@model AddBookViewModel
+
+<h2>Yeni Kitap Ekle</h2>
+
+<form asp-action="AddBook" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label asp-for="Book.Title" class="control-label">Kitap Adı:</label>
+        <input asp-for="Book.Title" class="form-control" style="width:50%" />
+        <span asp-validation-for="Book.Title" class="text-danger"></span>
+    </div>
+    <br />
+    <div class="form-group">
+        <label asp-for="Book.Author" class="control-label">Kitap Yazarı:</label>
+        <input asp-for="Book.Author" class="form-control" style="width:50%" />
+        <span asp-validation-for="Book.Author" class="text-danger"></span>
+    </div>
+    <br />
+    <div class="form-group">
+        <label asp-for="FileUpload.ImageFile" class="control-label">Kitap Resmi:</label>
+        <input asp-for="FileUpload.ImageFile" type="file" class="form-control" style="width:50%" />
+        <span asp-validation-for="FileUpload.ImageFile" class="text-danger"></span>
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Kitap Ekle</button>
+</form>
