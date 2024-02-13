@@ -1,8 +1,10 @@
 ﻿using LibraryApp.Core.Concrete;
 using LibraryApp.Models;
 using LibraryApp.Services.Abstract;
+using LibraryApp.Services.Concrete;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace LibraryApp.Controllers
 {
@@ -10,34 +12,64 @@ namespace LibraryApp.Controllers
     {
         private readonly ILibraryService _libraryService;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly ILogger<LibraryController> _logger;
 
-        public LibraryController(ILibraryService libraryService, IWebHostEnvironment webHostEnvironment)
+        public LibraryController(ILibraryService libraryService, IWebHostEnvironment webHostEnvironment, ILogger<LibraryController> logger)
         {
             _libraryService = libraryService;
             _webHostEnvironment = webHostEnvironment;
+            _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            var books = _libraryService.GetAllBooks();
-            return View(books);
+        public IActionResult Index()//bütün kitaplar listelenir.
+        {            
+            try
+            {
+                var books = _libraryService.GetAllBooks();
+                return View(books);
+            }
+            catch (Exception ex)
+            {
+                string message = "Kitaplar Listelenirken Hata Oluştu";
+                ViewBag.ErrorMessage = message;
+                _logger.LogError(ex, message);
+                return RedirectToAction("Index", "Error");
+            }
         }
-        public IActionResult Borrow(int id)
+        public IActionResult Borrow(int id)//ödünç verme işleminin get kısmı. bu kısımda uygun id ye göre kitap bulunur ve getirilir.
         {
             var book = _libraryService.GetBookById(id);
             return View();
         }
         [HttpPost]
-        public IActionResult Borrow(Book book)
+        public IActionResult Borrow(Book book)//ödünç verme işleminin post kısmı. Kullanıcıdan alınan bilgileri service e gönderir.
         {
-            // Ödünç alma işlemini gerçekleştir
-            _libraryService.BorrowBook(book.Id, book.BorrowerName, DateTime.Now);
+            if (book.BorrowerName != null && book.ReturnDate != null)
+            {
+                try
+                {
+                    _libraryService.BorrowBook(book.Id, book.BorrowerName, DateTime.Now);
+                }
+                catch (Exception ex)
+                {
+                    var message = "Ödünç alma işlemi sırasında bir hata oluştu.";
+                    _logger.LogError(ex, message);
+                    // Hata mesajını kullanıcıya gösterme
+                    ViewBag.ErrorMessage = message;
+                    return RedirectToAction("Index", "Error");
+                }
 
-            return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                return View(book);
+            }
+            
         }
         public IActionResult Deliver(int id)
         {
-            // Kitabın ödünç alınan bilgilerini getir
+            // Eşleşen id ye göre kitabın ödünç alınan kişi bilgilerini getir
             var book = _libraryService.GetBookById(id);
 
             if (book == null || string.IsNullOrEmpty(book.BorrowerName))
@@ -50,16 +82,25 @@ namespace LibraryApp.Controllers
 
         [HttpPost]
         public IActionResult Deliver(Book book)
-        {
-            // Teslim etme işlemini gerçekleştir
-            _libraryService.DeliverBook(book.Id);
-
+        {   
+            try
+            {
+                // Teslim etme işlemi için gerekli kitabı service katmanına gönderir.
+                _libraryService.DeliverBook(book.Id);
+            }
+            catch (Exception ex)
+            {
+                string message = "Teslim etme işlemi sırasında bir hata oluştu.";
+                _logger.LogError(ex, message);
+                ViewBag.ErrorMessage = message;
+                return RedirectToAction("Index", "Error");
+            }
             return RedirectToAction("Index");
         }
 
         public IActionResult AddBook()
         {
-            var viewModel = new AddBookViewModel
+            var viewModel = new BookViewModel
             {
                 Book = new Book(),
                 FileUpload = new FileUploadModel()
@@ -69,31 +110,49 @@ namespace LibraryApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddBook(AddBookViewModel viewModel)
+        public IActionResult AddBook(BookViewModel viewModel)
         {
             // Bu action metodunda yeni kitap ekleme işlemini gerçekleştir
-            var book = viewModel.Book;
-            var fileUpload = viewModel.FileUpload;
-
-
-            var uploadFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img");
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileUpload.ImageFile.FileName;
-            var filePath = Path.Combine(uploadFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            if (viewModel.Book.Author != null && viewModel.Book.Title != null && viewModel.FileUpload.ImageFile != null)
             {
-                fileUpload.ImageFile.CopyTo(fileStream);
+                try
+                {
+                    var book = viewModel.Book;
+                    var fileUpload = viewModel.FileUpload;
+
+                    //eklenen dosyanın pathini kaydetmek için
+                    var uploadFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img");
+                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileUpload.ImageFile.FileName;
+                    var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        fileUpload.ImageFile.CopyTo(fileStream);
+                    }
+
+                    book.Author = viewModel.Book.Author;
+                    book.Title = viewModel.Book.Title;
+                    var date = new DateTime(1111 - 11 - 11);
+                    book.ReturnDate = date;
+                    book.BorrowerName = "----";
+                    book.ImageUrl = uniqueFileName;
+                    book.IsAvailable = true;
+
+                    _libraryService.AddBook(book);
+                }
+                catch (Exception ex)
+                {
+                    string message = "Kitap ekleme işlemi sırasında bir hata oluştu.";
+                    _logger.LogError(ex,message);
+                    ViewBag.ErrorMessage = message;
+                    return RedirectToAction("Index", "Error");
+                }
+                return RedirectToAction("Index");
             }
-
-            book.Author = viewModel.Book.Author;
-            book.Title = viewModel.Book.Title;
-            book.ReturnDate = null;
-            book.BorrowerName = "";
-            book.ImageUrl = uniqueFileName;
-            book.IsAvailable = true;
-
-            _libraryService.AddBook(book);
-            return RedirectToAction("Index");
+            else
+            {
+                return View(viewModel);
+            }       
         }
     }
 }

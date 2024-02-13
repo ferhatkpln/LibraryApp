@@ -16,15 +16,30 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var book in Model)
+         @foreach (var book in Model)
         {
             <tr>
                 <td></td>
                 <td>@book.Title</td>
                 <td>@book.Author</td>
                 <td>@(book.IsAvailable ? "Kütüphanede" : "Dışarıda")</td>
-                <td>@book.BorrowerName</td>
-                <td>@book.ReturnDate</td>
+                @if (book.BorrowerName == "----")
+                {
+                    <td></td>
+                }
+                else
+                {
+                    <td>@book.BorrowerName</td>
+                }
+
+                @if (book.ReturnDate.ToString() == "1.01.0001 00:00:00")
+                {
+                    <td></td>
+                }
+                else
+                {
+                    <td>@(((DateTime)book.ReturnDate).ToString("dd/MM/yyyy"))</td>
+                }
                 <td><img src="~/img/@book.ImageUrl" height="70" width="90" border="2"></td>
                 <td>
                     @if (book.IsAvailable)

@@ -29,9 +29,13 @@ namespace LibraryApp.Services.Concrete
             var book = _context.Books.Find(bookId);
             if (book != null)
             {
-                book.IsAvailable = false;
-                book.BorrowerName = borrowerName;
-                book.ReturnDate = returnDate;
+                var borrower = new Book
+                {
+                    BorrowerName = borrowerName,
+                    ReturnDate = returnDate.Date,
+                    IsAvailable= false
+                };
+                _context.Books.Add(borrower);
                 _context.SaveChanges();
             }
         }
@@ -48,8 +52,9 @@ namespace LibraryApp.Services.Concrete
             if (book != null)
             {
                 // Teslim etme işlemini gerçekleştir
-                book.BorrowerName = "";
-                book.ReturnDate = null;
+                book.BorrowerName = "----";
+                var date = new DateTime(1111 - 11 - 11);
+                book.ReturnDate = date;
                 book.IsAvailable = true;
 
                 _context.SaveChanges();
